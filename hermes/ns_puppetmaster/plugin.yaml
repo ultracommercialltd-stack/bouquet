@@ -1,0 +1,18 @@
+name: ns-puppetmaster
+version: 0.1.0
+description: Guarded NationStates API operator and Bouquet manual-action bridge.
+provides_tools:
+  - ns_roster_status
+  - ns_nation_status
+  - ns_keepalive
+  - ns_get_issues
+  - ns_answer_issue
+  - ns_action_policy
+requires_env:
+  - name: NS_MAIN_NATION
+    description: Canonical main NationStates nation.
+  - name: NS_USER_AGENT
+    description: Informative NationStates API User-Agent with author/contact identity.
+  - name: NS_CREDENTIALS_FILE
+    description: Mode-0600 JSON roster containing internal X-Autologin credentials.
+    secret: true
