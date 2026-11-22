@@ -26,6 +26,7 @@ def add_nation(
     user_agent: str,
     allow_issue_autonomy: bool = False,
     decision_profile: str = "manual",
+    census_target: str | None = None,
 ) -> dict[str, str]:
     name = canon(nation)
     if not name:
@@ -39,6 +40,8 @@ def add_nation(
         raise ValueError("invalid decision profile")
     if allow_issue_autonomy and decision_profile == "manual":
         raise ValueError("autonomous issue answering requires a non-manual decision profile")
+    if decision_profile == "census_target" and not (census_target or "").strip():
+        raise ValueError("census_target profile requires a census target")
 
     url = f"{API_URL}?{urlencode({'nation': name, 'q': 'ping'})}"
     request = Request(url, headers={"User-Agent": user_agent, "X-Password": password})
@@ -64,6 +67,8 @@ def add_nation(
         "allow_issue_autonomy": allow_issue_autonomy,
         "decision_profile": decision_profile,
     }
+    if census_target:
+        nations[name]["census_target"] = census_target.strip()
     _atomic_write_credentials(credentials_file, data)
     return {"nation": name, "status": "added"}
 
@@ -108,6 +113,7 @@ def main() -> int:
         default="manual",
     )
     parser.add_argument("--autonomous-issues", action="store_true")
+    parser.add_argument("--census-target", help="World Census statistic for census_target profile")
     args = parser.parse_args()
     if not args.credentials_file:
         parser.error("--credentials-file or NS_CREDENTIALS_FILE is required")
@@ -119,6 +125,7 @@ def main() -> int:
         user_agent=args.user_agent,
         allow_issue_autonomy=args.autonomous_issues,
         decision_profile=args.decision_profile,
+        census_target=args.census_target,
     )
     print(f"Added {result['nation']} using X-Autologin; password was not stored.")
     return 0

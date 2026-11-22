@@ -281,13 +281,15 @@ class PuppetMasterTests(unittest.TestCase):
                 "one-time-password",
                 user_agent="PuppetMaster/0.1 (by:United_Paradisia; usedBy:United_Paradisia)",
                 allow_issue_autonomy=True,
-                decision_profile="mirror_united_paradisia",
+                decision_profile="census_target",
+                census_target="Civil Rights",
             )
 
         stored = json.loads(self.creds.read_text())
         puppet = stored["nations"]["profile_puppet"]
         self.assertTrue(puppet["allow_issue_autonomy"])
-        self.assertEqual(puppet["decision_profile"], "mirror_united_paradisia")
+        self.assertEqual(puppet["decision_profile"], "census_target")
+        self.assertEqual(puppet["census_target"], "Civil Rights")
 
     def test_plugin_registers_only_guarded_ns_tools(self):
         self.assertTrue(callable(ns_puppetmaster.register))

@@ -204,6 +204,7 @@ def ns_get_issues(args: dict, **kwargs: Any) -> str:
             "ok": True,
             "nation": nation,
             "decision_profile": entry.get("decision_profile", "manual"),
+            "census_target": entry.get("census_target"),
             "issues": issues,
             "rate_limit": response["rate_limit"],
         }
@@ -235,6 +236,8 @@ def ns_answer_issue(args: dict, **kwargs: Any) -> str:
     profile = entry.get("decision_profile", "manual")
     if profile not in {"preserve", "mirror_united_paradisia", "census_target"}:
         return _error("policy_denied", "This nation has no valid autonomous decision profile.")
+    if profile == "census_target" and not entry.get("census_target"):
+        return _error("policy_denied", "The census-target profile has no configured statistic.")
     autologin = entry.get("autologin")
     if not isinstance(autologin, str) or not autologin:
         return _error("credential_missing", "Nation credential is not configured.")
@@ -265,6 +268,7 @@ def ns_answer_issue(args: dict, **kwargs: Any) -> str:
             "issue_id": args["issue_id"],
             "option_id": args["option_id"],
             "decision_profile": profile,
+            "census_target": entry.get("census_target"),
             "description": (root.findtext(".//DESC") or "").strip(),
         }
     )

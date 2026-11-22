@@ -30,6 +30,8 @@ python3 -m hermes.ns_puppetmaster.onboard "Puppet Name" \
 
 Profiles are `preserve`, `mirror_united_paradisia`, and `census_target`. The main nation is always forced to manual issue approval even if its roster entry is misconfigured.
 
+For a census target, add `--census-target "Civil Rights"` (or another explicit World Census statistic). Census-target execution fails closed when the statistic is missing.
+
 The command prompts through `getpass`, exchanges the password for `X-Autologin` using the official `q=ping` private shard, and never stores the password or X-Pin.
 
 ## Tests
