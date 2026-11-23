@@ -427,14 +427,17 @@ def make_handler(manager: OnboardingManager):
                 return expected
             if origin:
                 return ""
-            referer = urlparse(self.headers.get("Referer", ""))
             expected_parts = urlparse(expected)
+            host_matches = self.headers.get("Host", "").lower() == expected_parts.netloc.lower()
+            if host_matches and self.headers.get("Sec-Fetch-Site", "") == "same-origin":
+                return expected
+            referer = urlparse(self.headers.get("Referer", ""))
             same_referer = (
                 referer.scheme == expected_parts.scheme
                 and referer.netloc == expected_parts.netloc
                 and referer.path.startswith("/")
             )
-            if same_referer and self.headers.get("Sec-Fetch-Site", "") == "same-origin":
+            if host_matches and same_referer:
                 return expected
             return ""
 
