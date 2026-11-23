@@ -36,7 +36,7 @@ The command prompts through `getpass`, exchanges the password for `X-Autologin` 
 
 ## HTTPS onboarding
 
-Puppet Master can create a single-use HTTPS onboarding link with `ns_create_onboarding_link`. The link expires in at most 15 minutes and is consumed when the browser exchanges it for a Secure, HttpOnly, SameSite=Strict `__Host-` session cookie. The token is removed from the address bar before the password form appears.
+Puppet Master can create a single-use HTTPS onboarding link with `ns_create_onboarding_link`. The link expires in at most 15 minutes. A harmless confirmation page prevents Telegram/link-preview crawlers from consuming it; only the human `Continue securely` POST exchanges it for a Secure, HttpOnly, SameSite=Strict `__Host-` session cookie. The token is removed from the address bar before the password form appears.
 
 The HTTPS form:
 

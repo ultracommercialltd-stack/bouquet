@@ -104,6 +104,12 @@ class OnboardingManager:
         self._mutate(mutate)
         return result
 
+    def link_available(self, token: str) -> bool:
+        if not token or len(token) > 128:
+            return False
+        link = self._read()["links"].get(_digest(token))
+        return bool(link and not link.get("used") and float(link.get("expires_at", 0)) > self.now())
+
     def get_session(self, cookie: str) -> dict[str, Any] | None:
         if not cookie:
             return None
@@ -267,6 +273,7 @@ def _security_headers(handler: BaseHTTPRequestHandler) -> None:
     handler.send_header("Referrer-Policy", "no-referrer")
     handler.send_header("X-Content-Type-Options", "nosniff")
     handler.send_header("X-Frame-Options", "DENY")
+    handler.send_header("X-Robots-Tag", "noindex, nofollow, noarchive")
     handler.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
     handler.send_header("Strict-Transport-Security", "max-age=31536000")
 
@@ -311,16 +318,15 @@ def make_handler(manager: OnboardingManager):
                 return
             if parsed.path == "/start":
                 token = parse_qs(parsed.query).get("token", [""])[0]
-                session = manager.exchange_link(token)
-                if not session:
+                if not manager.link_available(token):
                     self._send(HTTPStatus.NOT_FOUND, _page("Link unavailable", "<p>This link is invalid, expired, or already used.</p>"))
                     return
-                cookie = f"{COOKIE_NAME}={session['cookie']}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age={SESSION_TTL_SECONDS}"
-                self.send_response(HTTPStatus.SEE_OTHER)
-                _security_headers(self)
-                self.send_header("Set-Cookie", cookie)
-                self.send_header("Location", "/")
-                self.end_headers()
+                body = (
+                    "<p>This is a single-use Puppet Master onboarding link. Continue only if you requested it.</p>"
+                    f"<form method='post' action='/exchange'><input type='hidden' name='token' value='{html.escape(token)}'>"
+                    "<button type='submit'>Continue securely</button></form>"
+                )
+                self._send(HTTPStatus.OK, _page("Confirm onboarding", body))
                 return
             if parsed.path != "/":
                 self._send(HTTPStatus.NOT_FOUND, _page("Not found", "<p>Not found.</p>"))
@@ -354,7 +360,8 @@ def make_handler(manager: OnboardingManager):
             self._send(HTTPStatus.OK, _page("Puppet Master onboarding", body))
 
         def do_POST(self) -> None:
-            if urlparse(self.path).path != "/submit":
+            path = urlparse(self.path).path
+            if path not in {"/exchange", "/submit"}:
                 self._send(HTTPStatus.NOT_FOUND, _page("Not found", "<p>Not found.</p>"))
                 return
             try:
@@ -373,6 +380,25 @@ def make_handler(manager: OnboardingManager):
                 self._send(HTTPStatus.BAD_REQUEST, _page("Invalid request", "<p>The request was rejected.</p>"))
                 return
             value = lambda key: form.get(key, [""])[0]
+            if path == "/exchange":
+                try:
+                    expected_origin = manager.current_public_url()
+                except RuntimeError:
+                    expected_origin = ""
+                if self.headers.get("Origin", "").rstrip("/") != expected_origin:
+                    self._send(HTTPStatus.FORBIDDEN, _page("Request denied", "<p>The request was rejected.</p>"))
+                    return
+                session = manager.exchange_link(value("token"))
+                if not session:
+                    self._send(HTTPStatus.NOT_FOUND, _page("Link unavailable", "<p>This link is invalid, expired, or already used.</p>"))
+                    return
+                cookie = f"{COOKIE_NAME}={session['cookie']}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age={SESSION_TTL_SECONDS}"
+                self.send_response(HTTPStatus.SEE_OTHER)
+                _security_headers(self)
+                self.send_header("Set-Cookie", cookie)
+                self.send_header("Location", "/")
+                self.end_headers()
+                return
             result = manager.submit(
                 cookie=self._cookie(),
                 csrf=value("csrf"),

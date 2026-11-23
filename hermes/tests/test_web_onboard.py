@@ -43,11 +43,14 @@ class WebOnboardTests(unittest.TestCase):
 
     def test_link_exchanges_once_for_cookie_session_and_csrf(self):
         token = self.manager.issue_link(ttl_seconds=600).split("token=", 1)[1]
+        self.assertTrue(self.manager.link_available(token))
+        self.assertTrue(self.manager.link_available(token))
         session = self.manager.exchange_link(token)
         self.assertIsNotNone(session)
         self.assertIn("cookie", session)
         self.assertIn("csrf", session)
         self.assertIsNone(self.manager.exchange_link(token))
+        self.assertFalse(self.manager.link_available(token))
         self.assertNotIn(token, self.state.read_text(encoding="utf-8"))
 
     def test_expired_link_is_rejected(self):
