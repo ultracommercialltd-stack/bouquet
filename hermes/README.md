@@ -34,6 +34,22 @@ For a census target, add `--census-target "Civil Rights"` (or another explicit W
 
 The command prompts through `getpass`, exchanges the password for `X-Autologin` using the official `q=ping` private shard, and never stores the password or X-Pin.
 
+## HTTPS onboarding
+
+Puppet Master can create a single-use HTTPS onboarding link with `ns_create_onboarding_link`. The link expires in at most 15 minutes and is consumed when the browser exchanges it for a Secure, HttpOnly, SameSite=Strict `__Host-` session cookie. The token is removed from the address bar before the password form appears.
+
+The HTTPS form:
+
+- binds only to a localhost backend behind a Cloudflare HTTPS tunnel;
+- stores only hashes of link, session, and CSRF values in mode-0600 state;
+- validates same-origin POST requests and caps requests at 8 KiB;
+- never logs request paths, nation names, form fields, or passwords;
+- sends the password directly to the official NationStates API for X-Autologin exchange;
+- invalidates a session after success or three failed attempts;
+- always forces the main nation to manual issue approval.
+
+A Telegram message may contain the short-lived HTTPS link, but the password must only be entered on the HTTPS page—never typed into Telegram.
+
 ## Tests
 
 ```bash

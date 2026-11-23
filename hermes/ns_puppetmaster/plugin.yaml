@@ -7,6 +7,7 @@ provides_tools:
   - ns_keepalive
   - ns_get_issues
   - ns_answer_issue
+  - ns_create_onboarding_link
   - ns_action_policy
 requires_env:
   - name: NS_MAIN_NATION
@@ -16,3 +17,7 @@ requires_env:
   - name: NS_CREDENTIALS_FILE
     description: Mode-0600 JSON roster containing internal X-Autologin credentials.
     secret: true
+  - name: NS_ONBOARD_STATE_FILE
+    description: Mode-0600 state for hashed single-use onboarding links and sessions.
+  - name: NS_ONBOARD_URL_FILE
+    description: File containing the current trusted HTTPS tunnel URL.

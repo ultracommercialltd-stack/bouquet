@@ -306,11 +306,27 @@ class PuppetMasterTests(unittest.TestCase):
         names = [item["name"] for item in ctx.tools]
         self.assertEqual(
             names,
-            ["ns_roster_status", "ns_nation_status", "ns_keepalive", "ns_get_issues", "ns_answer_issue", "ns_action_policy"],
+            ["ns_roster_status", "ns_nation_status", "ns_keepalive", "ns_get_issues", "ns_answer_issue", "ns_create_onboarding_link", "ns_action_policy"],
         )
         for item in ctx.tools:
             self.assertEqual(item["toolset"], "ns-puppetmaster")
             self.assertFalse(item["schema"]["parameters"].get("additionalProperties", True))
+
+    def test_create_onboarding_link_returns_short_lived_https_url(self):
+        url_file = Path(self.tmp.name) / "public-url.txt"
+        url_file.write_text("https://random.trycloudflare.com\n", encoding="utf-8")
+        state_file = Path(self.tmp.name) / "web-state.json"
+        with patch.dict(
+            os.environ,
+            {
+                "NS_ONBOARD_URL_FILE": str(url_file),
+                "NS_ONBOARD_STATE_FILE": str(state_file),
+            },
+        ):
+            result = json.loads(tools.ns_create_onboarding_link({"ttl_seconds": 600}))
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["url"].startswith("https://random.trycloudflare.com/start?token="))
+        self.assertNotIn(result["url"].split("token=", 1)[1], state_file.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

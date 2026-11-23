@@ -1,0 +1,25 @@
+[Unit]
+Description=Puppet Master secure HTTPS onboarding backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/steven/hermes-puppetmaster/home/plugins/ns-puppetmaster
+EnvironmentFile=/home/steven/hermes-puppetmaster/home/.env
+Environment=PYTHONPATH=/home/steven/hermes-puppetmaster/home/plugins
+ExecStart=/home/steven/.hermes/hermes-agent/venv/bin/python -m ns-puppetmaster.web_onboard serve --host 127.0.0.1 --port 8871
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/steven/hermes-puppetmaster/home/state /home/steven/hermes-puppetmaster/home/ns
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=default.target

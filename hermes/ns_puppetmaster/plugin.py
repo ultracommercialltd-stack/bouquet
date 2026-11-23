@@ -10,6 +10,7 @@ def register(ctx):
         ("ns_keepalive", schemas.NS_KEEPALIVE, tools.ns_keepalive),
         ("ns_get_issues", schemas.NS_GET_ISSUES, tools.ns_get_issues),
         ("ns_answer_issue", schemas.NS_ANSWER_ISSUE, tools.ns_answer_issue),
+        ("ns_create_onboarding_link", schemas.NS_CREATE_ONBOARDING_LINK, tools.ns_create_onboarding_link),
         ("ns_action_policy", schemas.NS_ACTION_POLICY, tools.ns_action_policy),
     ]
     for name, schema, handler in registrations:

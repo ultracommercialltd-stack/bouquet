@@ -1,0 +1,24 @@
+[Unit]
+Description=Puppet Master Cloudflare HTTPS onboarding tunnel
+After=network-online.target hermes-puppet-onboarding.service
+Wants=network-online.target
+Requires=hermes-puppet-onboarding.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/steven/hermes-puppetmaster/home/plugins/ns-puppetmaster
+EnvironmentFile=/home/steven/hermes-puppetmaster/home/.env
+ExecStart=/home/steven/.hermes/hermes-agent/venv/bin/python /home/steven/hermes-puppetmaster/home/plugins/ns-puppetmaster/run_tunnel.py --cloudflared /home/steven/bin/cloudflared --backend http://127.0.0.1:8871 --url-file /home/steven/hermes-puppetmaster/home/state/onboarding-url.txt
+Restart=always
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/steven/hermes-puppetmaster/home/state
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+
+[Install]
+WantedBy=default.target

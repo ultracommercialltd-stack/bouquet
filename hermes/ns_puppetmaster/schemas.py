@@ -59,6 +59,16 @@ NS_ANSWER_ISSUE = {
     },
 }
 
+NS_CREATE_ONBOARDING_LINK = {
+    "name": "ns_create_onboarding_link",
+    "description": "Create a single-use HTTPS link for securely adding one NationStates puppet. Passwords are entered only on the HTTPS page, never in chat.",
+    "parameters": {
+        "type": "object",
+        "properties": {"ttl_seconds": {"type": "integer", "minimum": 60, "maximum": 900}},
+        "additionalProperties": False,
+    },
+}
+
 NS_ACTION_POLICY = {
     "name": "ns_action_policy",
     "description": "Classify a requested NationStates operation as autonomous, policy-gated, manual-only via Bouquet, denied, or unknown.",

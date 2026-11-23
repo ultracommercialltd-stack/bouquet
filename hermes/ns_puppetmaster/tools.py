@@ -14,7 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request
 import urllib.request
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
 
 API_URL = "https://www.nationstates.net/cgi-bin/api.cgi"
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
@@ -274,6 +274,22 @@ def ns_answer_issue(args: dict, **kwargs: Any) -> str:
     )
 
 
+def ns_create_onboarding_link(args: dict, **kwargs: Any) -> str:
+    del kwargs
+    if not isinstance(args, dict):
+        return _error("invalid_input", "Arguments must be an object.")
+    ttl = args.get("ttl_seconds", 600)
+    if not isinstance(ttl, int) or isinstance(ttl, bool) or ttl < 60 or ttl > 900:
+        return _error("invalid_input", "ttl_seconds must be an integer from 60 to 900.")
+    try:
+        from .web_onboard import manager_from_env
+
+        url = manager_from_env().issue_link(ttl)
+    except (OSError, RuntimeError, ValueError):
+        return _error("onboarding_unavailable", "Secure HTTPS onboarding is not ready.")
+    return _json({"ok": True, "url": url, "expires_in_seconds": ttl, "single_use": True})
+
+
 def ns_action_policy(args: dict, **kwargs: Any) -> str:
     del kwargs
     if not isinstance(args, dict) or not isinstance(args.get("action"), str):
@@ -345,7 +361,8 @@ def _api_request(
         if delay > 0:
             time.sleep(delay)
         try:
-            with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+            # API_URL is a module constant for the official NationStates HTTPS API.
+            with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:  # nosec B310
                 body = response.read(MAX_RESPONSE_BYTES + 1)
                 rate = _rate_headers(response.headers)
                 _update_rate_limit(response.status, rate)

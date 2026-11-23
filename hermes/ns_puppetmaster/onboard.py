@@ -45,7 +45,8 @@ def add_nation(
 
     url = f"{API_URL}?{urlencode({'nation': name, 'q': 'ping'})}"
     request = Request(url, headers={"User-Agent": user_agent, "X-Password": password})
-    with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+    # API_URL is imported as the fixed official NationStates HTTPS endpoint.
+    with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:  # nosec B310
         body = response.read(1024 * 1024).decode("utf-8", errors="replace")
         autologin = response.headers.get("X-Autologin", "").strip()
     if response.status != 200 or "<PING>1</PING>" not in body:
