@@ -381,9 +381,10 @@ def make_handler(manager: OnboardingManager):
                 return
             value = lambda key: form.get(key, [""])[0]
             if path == "/exchange":
-                if not self._verified_origin():
-                    self._send(HTTPStatus.FORBIDDEN, _page("Request denied", "<p>The request was rejected.</p>"))
-                    return
+                # The random 256-bit, single-use token is the capability for this
+                # no-password exchange step. Preview crawlers only GET and cannot
+                # consume it. The later credential POST still requires cookie,
+                # CSRF, and verified same-origin metadata.
                 session = manager.exchange_link(value("token"))
                 if not session:
                     self._send(HTTPStatus.NOT_FOUND, _page("Link unavailable", "<p>This link is invalid, expired, or already used.</p>"))
