@@ -381,11 +381,7 @@ def make_handler(manager: OnboardingManager):
                 return
             value = lambda key: form.get(key, [""])[0]
             if path == "/exchange":
-                try:
-                    expected_origin = manager.current_public_url()
-                except RuntimeError:
-                    expected_origin = ""
-                if self.headers.get("Origin", "").rstrip("/") != expected_origin:
+                if not self._verified_origin():
                     self._send(HTTPStatus.FORBIDDEN, _page("Request denied", "<p>The request was rejected.</p>"))
                     return
                 session = manager.exchange_link(value("token"))
@@ -402,7 +398,7 @@ def make_handler(manager: OnboardingManager):
             result = manager.submit(
                 cookie=self._cookie(),
                 csrf=value("csrf"),
-                origin=self.headers.get("Origin", ""),
+                origin=self._verified_origin(),
                 nation=value("nation"),
                 password=value("password"),
                 decision_profile=value("decision_profile"),
@@ -419,6 +415,27 @@ def make_handler(manager: OnboardingManager):
                 key, sep, value = part.strip().partition("=")
                 if sep and key == COOKIE_NAME:
                     return value
+            return ""
+
+        def _verified_origin(self) -> str:
+            try:
+                expected = manager.current_public_url()
+            except RuntimeError:
+                return ""
+            origin = self.headers.get("Origin", "").rstrip("/")
+            if origin == expected:
+                return expected
+            if origin:
+                return ""
+            referer = urlparse(self.headers.get("Referer", ""))
+            expected_parts = urlparse(expected)
+            same_referer = (
+                referer.scheme == expected_parts.scheme
+                and referer.netloc == expected_parts.netloc
+                and referer.path.startswith("/")
+            )
+            if same_referer and self.headers.get("Sec-Fetch-Site", "") == "same-origin":
+                return expected
             return ""
 
     return Handler
